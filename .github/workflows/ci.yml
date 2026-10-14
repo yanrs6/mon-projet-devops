@@ -26,4 +26,16 @@ jobs:
         run: python -m pytest -v
 
       - name: Construire l'image Docker
+      yaml
+
+      - name: Demarrer le conteneur
+        run: docker run -d --name mon-app-test -p 5000:5000 mon-projet-devops:ci
+
+      - name: Verifier la route health
+        run: |
+          python -c "import time, urllib.request; url='http://127.0.0.1:5000/health'; exec('for i in range(15):\n try:\n  r=urllib.request.urlopen(url, timeout=2)\n  assert r.status == 200\n  assert b\"ok\" in r.read()\n  print(\"Test Docker reussi\")\n  break\n except Exception:\n  if i == 14: raise\n  time.sleep(2)')"
+
+      - name: Nettoyer le conteneur
+        if: always()
+        run: docker rm -f mon-app-test
         run: docker build -t mon-projet-devops:ci .
